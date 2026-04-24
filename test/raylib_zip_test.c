@@ -1,7 +1,7 @@
 #include <string.h>  // memcmp
 
 #include "zip.h"
-#define RAYLIB_ASSERT_LOG LOG_ERROR
+#define RAYLIB_ASSERT_LOG LOG_FATAL
 #include "raylib-assert.h"
 
 #define RAYLIB_ZIP_IMPLEMENTATION
