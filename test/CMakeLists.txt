@@ -4,6 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/.cmake)
 
 find_package(raylib)
 find_package(zip)
+find_package(RaylibAssert)
 
 # raylib_zip_test
 add_executable(raylib_zip_test raylib_zip_test.c)
@@ -11,6 +12,7 @@ target_link_libraries(raylib_zip_test PUBLIC
     raylib
     raylib_zip
     zip
+    raylib_assert
 )
 
 # C99
