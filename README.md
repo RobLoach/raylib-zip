@@ -41,10 +41,9 @@ int GetZipEntryCount(Zip zip);                                       // Get the 
 ``` c
 FilePathList LoadDirectoryFilesFromZip(Zip zip, const char* dirPath);
 FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs);
-void UnloadDirectoryFiles(FilePathList files);                        // From raylib
 ```
 
-`LoadDirectoryFilesFromZipEx` supports semicolon-separated extension filters (e.g. `".png;.jpg"`) and optional recursive scanning. Both functions return a `FilePathList` compatible with raylib's `UnloadDirectoryFiles()`.
+`LoadDirectoryFilesFromZipEx` supports semicolon-separated extension filters (e.g. `".png;.jpg"`) and optional recursive scanning. Results are unloaded with raylib's `UnloadDirectoryFiles()`.
 
 ### File Data
 
