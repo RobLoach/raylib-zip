@@ -11,7 +11,7 @@ Zip archive support for [raylib](https://www.raylib.com) using [kuba--/zip](http
 int main() {
     InitWindow(800, 600, "raylib-zip");
 
-    Zip zip = InitZip("resources.zip");
+    Zip zip = LoadZip("resources.zip");
 
     Image image = LoadImageFromZip(zip, "player.png");
     Texture2D texture = LoadTextureFromImage(image);
@@ -20,7 +20,7 @@ int main() {
     // ... game loop ...
 
     UnloadTexture(texture);
-    CloseZip(zip);
+    UnloadZip(zip);
     CloseWindow();
 }
 ```
@@ -28,8 +28,9 @@ int main() {
 ## API
 
 ``` c
-Zip InitZip(const char* zipFile);
-void CloseZip(Zip zip);
+Zip LoadZip(const char* zipFile);
+Zip LoadZipFromMemory(const unsigned char* data, int dataSize);
+void UnloadZip(Zip zip);
 bool IsZipReady(Zip zip);
 bool FileExistsInZip(Zip zip, const char* fileName);
 int GetZipEntryCount(Zip zip);

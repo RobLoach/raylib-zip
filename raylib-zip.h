@@ -46,8 +46,9 @@ typedef struct Zip {
 extern "C" {
 #endif
 
-RAYLIB_ZIP_API Zip InitZip(const char* zipFile);
-RAYLIB_ZIP_API void CloseZip(Zip zip);
+RAYLIB_ZIP_API Zip LoadZip(const char* zipFile);
+RAYLIB_ZIP_API Zip LoadZipFromMemory(const unsigned char* data, int dataSize);
+RAYLIB_ZIP_API void UnloadZip(Zip zip);
 RAYLIB_ZIP_API bool IsZipReady(Zip zip);
 RAYLIB_ZIP_API bool FileExistsInZip(Zip zip, const char* fileName);
 RAYLIB_ZIP_API int GetZipEntryCount(Zip zip);
@@ -90,7 +91,7 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
 extern "C" {
 #endif
 
-RAYLIB_ZIP_API Zip InitZip(const char* zipFile) {
+RAYLIB_ZIP_API Zip LoadZip(const char* zipFile) {
     Zip zip = {0};
     zip.zip = zip_open(zipFile, 0, 'r');
     if (zip.zip == NULL) {
@@ -99,7 +100,16 @@ RAYLIB_ZIP_API Zip InitZip(const char* zipFile) {
     return zip;
 }
 
-RAYLIB_ZIP_API void CloseZip(Zip zip) {
+RAYLIB_ZIP_API Zip LoadZipFromMemory(const unsigned char* data, int dataSize) {
+    Zip zip = {0};
+    zip.zip = zip_stream_open((const char*)data, (size_t)dataSize, 0, 'r');
+    if (zip.zip == NULL) {
+        TraceLog(LOG_WARNING, "ZIP: Failed to open zip from memory");
+    }
+    return zip;
+}
+
+RAYLIB_ZIP_API void UnloadZip(Zip zip) {
     if (zip.zip != NULL) {
         zip_close((struct zip_t*)zip.zip);
     }

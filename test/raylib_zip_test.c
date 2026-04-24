@@ -16,8 +16,8 @@ int main() {
     zip_entry_close(z);
     zip_close(z);
 
-    // Initialize
-    Zip zip = InitZip("test.zip");
+    // Load from file
+    Zip zip = LoadZip("test.zip");
     assert(IsZipReady(zip));
     assert(GetZipEntryCount(zip) == 1);
     assert(FileExistsInZip(zip, "hello.txt"));
@@ -37,7 +37,20 @@ int main() {
     assert(strcmp(text, testContent) == 0);
     UnloadFileTextFromZip(text);
 
-    CloseZip(zip);
+    UnloadZip(zip);
+
+    // Load from memory
+    int zipDataSize = 0;
+    unsigned char* zipData = LoadFileData("test.zip", &zipDataSize);
+    assert(zipData != NULL);
+    Zip zipMem = LoadZipFromMemory(zipData, zipDataSize);
+    assert(IsZipReady(zipMem));
+    char* memText = LoadFileTextFromZip(zipMem, "hello.txt");
+    assert(memText != NULL);
+    assert(strcmp(memText, testContent) == 0);
+    UnloadFileTextFromZip(memText);
+    UnloadZip(zipMem);
+    UnloadFileData(zipData);
 
     return 0;
 }
