@@ -100,7 +100,7 @@ RAYLIB_ZIP_API int GetZipEntryCount(Zip zip);
  * Load raw file data from a zip entry. Free with UnloadFileData().
  *
  * @param fileName Path of the entry within the zip.
- * @param dataSize Output byte count of the loaded data, or NULL if size is not required.
+ * @param dataSize Optional output byte count of the loaded data. Use NULL if size is not required.
  */
 RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize);
 
@@ -177,6 +177,10 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
 #include <stdlib.h>
 
 #define MINIZ_NO_STDIO
+#ifdef ZIP_ENABLE_DEFLATE
+#undef ZIP_ENABLE_DEFLATE
+#endif
+#define ZIP_ENABLE_DEFLATE 0
 
 #ifndef RAYLIB_ZIP_ZIP_H
     #define RAYLIB_ZIP_ZIP_H "zip.h"

@@ -1,4 +1,5 @@
-#include "zip.h"
+#include "raylib.h"
+
 #define RAYLIB_ASSERT_LOG LOG_FATAL
 #include "raylib-assert.h"
 
@@ -78,6 +79,8 @@ int main() {
 
         UnloadZip(zip);
     }
+
+    TraceLog(LOG_INFO, "ZIP: Tests pass");
 
     return 0;
 }
