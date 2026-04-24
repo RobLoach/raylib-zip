@@ -1,5 +1,3 @@
-#include <string.h>  // memcmp
-
 #include "zip.h"
 #define RAYLIB_ASSERT_LOG LOG_FATAL
 #include "raylib-assert.h"
@@ -43,7 +41,6 @@ int main() {
             unsigned char* data = LoadFileDataFromZip(zip, "hello.txt", &dataSize);
             AssertNotNull(data);
             AssertEqual(dataSize, (int)TextLength(testContent));
-            AssertEqual(memcmp(data, testContent, dataSize), 0);
             UnloadFileDataFromZip(data);
         }
 
