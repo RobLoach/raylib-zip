@@ -165,11 +165,14 @@ extern "C" {
 #endif
 
 RAYLIB_ZIP_API Zip LoadZip(const char* zipFile) {
-    Zip zip = {0};
-    zip.zip = zip_open(zipFile, 0, 'r');
-    if (zip.zip == NULL) {
-        TraceLog(LOG_WARNING, "ZIP: Failed to open %s", zipFile);
+    int dataSize = 0;
+    unsigned char* data = LoadFileData(zipFile, &dataSize);
+    if (data == NULL) {
+        TraceLog(LOG_WARNING, "ZIP: Failed to load %s", zipFile);
+        return (Zip){0};
     }
+    Zip zip = LoadZipFromMemory(data, dataSize);
+    UnloadFileData(data);
     return zip;
 }
 
@@ -242,7 +245,7 @@ RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName,
     zip_entry_close(z);
 
     if (bytesRead < 0) {
-        RL_FREE(data);
+        MemFree(data);
         TraceLog(LOG_WARNING, "ZIP: Failed to read entry: %s", fileName);
         return NULL;
     }
@@ -252,7 +255,7 @@ RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName,
 }
 
 RAYLIB_ZIP_API void UnloadFileDataFromZip(unsigned char* data) {
-    RL_FREE(data);
+    MemFree(data);
 }
 
 RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
@@ -264,19 +267,19 @@ RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
 
     char* text = (char*)RL_MALLOC(dataSize + 1);
     if (text == NULL) {
-        RL_FREE(data);
+        MemFree(data);
         return NULL;
     }
 
     memcpy(text, data, dataSize);
     text[dataSize] = '\0';
-    RL_FREE(data);
+    MemFree(data);
 
     return text;
 }
 
 RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text) {
-    RL_FREE(text);
+    MemFree(text);
 }
 
 RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs) {
@@ -349,7 +352,7 @@ RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName) {
     }
 
     Image image = LoadImageFromMemory(GetFileExtension(fileName), data, dataSize);
-    RL_FREE(data);
+    MemFree(data);
     return image;
 }
 
@@ -372,7 +375,7 @@ RAYLIB_ZIP_API Wave LoadWaveFromZip(Zip zip, const char* fileName) {
     }
 
     Wave wave = LoadWaveFromMemory(GetFileExtension(fileName), data, dataSize);
-    RL_FREE(data);
+    MemFree(data);
     return wave;
 }
 
@@ -384,7 +387,7 @@ RAYLIB_ZIP_API Music LoadMusicStreamFromZip(Zip zip, const char* fileName) {
     }
 
     Music music = LoadMusicStreamFromMemory(GetFileExtension(fileName), data, dataSize);
-    RL_FREE(data);
+    MemFree(data);
     return music;
 }
 
@@ -396,7 +399,7 @@ RAYLIB_ZIP_API Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize,
     }
 
     Font font = LoadFontFromMemory(GetFileExtension(fileName), data, dataSize, fontSize, codepoints, codepointCount);
-    RL_FREE(data);
+    MemFree(data);
     return font;
 }
 
@@ -414,10 +417,10 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
     Shader shader = LoadShaderFromMemory(vsCode, fsCode);
 
     if (vsCode != NULL) {
-        RL_FREE(vsCode);
+        MemFree(vsCode);
     }
     if (fsCode != NULL) {
-        RL_FREE(fsCode);
+        MemFree(fsCode);
     }
 
     return shader;
