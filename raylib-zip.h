@@ -45,7 +45,8 @@
 
 /** A zip archive handle. */
 typedef struct Zip {
-    void* zip;  /**< Internal zip_t pointer from kuba--/zip. */
+    void* zip;   /**< Internal zip_t pointer from kuba--/zip. */
+    void* data;  /**< Owned memory buffer, or NULL if externally managed. */
 } Zip;
 
 #ifdef __cplusplus
@@ -172,7 +173,7 @@ RAYLIB_ZIP_API Zip LoadZip(const char* zipFile) {
         return (Zip){0};
     }
     Zip zip = LoadZipFromMemory(data, dataSize);
-    UnloadFileData(data);
+    zip.data = data;
     return zip;
 }
 
@@ -188,6 +189,9 @@ RAYLIB_ZIP_API Zip LoadZipFromMemory(const unsigned char* data, int dataSize) {
 RAYLIB_ZIP_API void UnloadZip(Zip zip) {
     if (zip.zip != NULL) {
         zip_close((struct zip_t*)zip.zip);
+    }
+    if (zip.data != NULL) {
+        MemFree(zip.data);
     }
 }
 
