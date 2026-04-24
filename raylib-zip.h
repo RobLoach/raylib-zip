@@ -43,8 +43,6 @@
 #endif
 #include RAYLIB_ZIP_RAYLIB_H
 
-#include <stdbool.h>
-
 typedef struct Zip {
     void* zip;  // struct zip_t*
 } Zip;
@@ -148,7 +146,7 @@ RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName,
     *dataSize = 0;
 
     if (zip.zip == NULL) {
-        TraceLog(LOG_WARNING, "ZIP: Not ready, call InitZip() first");
+        TraceLog(LOG_WARNING, "ZIP: Not ready, call LoadZip() first");
         return NULL;
     }
 
