@@ -53,95 +53,116 @@ typedef struct Zip {
 extern "C" {
 #endif
 
-/** @defgroup archive Archive
- * @{ */
-
-/** Open a zip archive from a file. Check the result with IsZipReady().
- * @param zipFile Path to the zip file to open. */
+/**
+ * Open a zip archive from a file. Check the result with IsZipValid().
+ *
+ * @param zipFile Path to the zip file to open.
+ * @return The loaded Zip, or empty on failure.
+ *
+ * @see IsZipValid()
+ */
 RAYLIB_ZIP_API Zip LoadZip(const char* zipFile);
 
-/** Open a zip archive from a memory buffer. Check the result with IsZipReady().
+/**
+ * Open a zip archive from a memory buffer. Check the result with IsZipValid().
+ *
  * @param data Pointer to the zip data in memory.
- * @param dataSize Size of the data in bytes. */
+ * @param dataSize Size of the data in bytes.
+ * @return The loaded Zip, or empty on failure.
+ *
+ * @see IsZipValid()
+ */
 RAYLIB_ZIP_API Zip LoadZipFromMemory(const unsigned char* data, int dataSize);
 
-/** Close and unload a zip archive. */
+/**
+ * Close and unload a zip archive.
+ */
 RAYLIB_ZIP_API void UnloadZip(Zip zip);
 
-/** Check whether a zip archive is open and ready to use. */
-RAYLIB_ZIP_API bool IsZipReady(Zip zip);
+/**
+ * Check whether a zip archive is open and ready to use.
+ */
+RAYLIB_ZIP_API bool IsZipValid(Zip zip);
 
-/** Check whether a file exists within the zip archive.
- * @param fileName Path of the entry within the zip. */
+/**
+ * Check whether a file exists within the zip archive.
+ *
+ * @param fileName Path of the entry within the zip.
+ */
 RAYLIB_ZIP_API bool FileExistsInZip(Zip zip, const char* fileName);
 
-/** Get the total number of entries in the zip archive. */
+/**
+ * Get the total number of entries in the zip archive.
+ */
 RAYLIB_ZIP_API int GetZipEntryCount(Zip zip);
 
-/** @} */
-
-/** @defgroup files File Data
- * @{ */
-
-/** Load raw file data from a zip entry. Free with UnloadFileDataFromZip().
+/**
+ * Load raw file data from a zip entry. Free with UnloadFileData().
+ *
  * @param fileName Path of the entry within the zip.
- * @param dataSize Output byte count of the loaded data. */
+ * @param dataSize Output byte count of the loaded data, or NULL if size is not required.
+ */
 RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize);
 
-/** Unload file data loaded with LoadFileDataFromZip(). */
-RAYLIB_ZIP_API void UnloadFileDataFromZip(unsigned char* data);
-
-/** Load a text file from a zip entry as a null-terminated string. Free with UnloadFileTextFromZip().
- * @param fileName Path of the entry within the zip. */
+/**
+ * Load a text file from a zip entry as a null-terminated string. Free with UnloadFileTextFromZip().
+ *
+ * @param fileName Path of the entry within the zip.
+ */
 RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName);
 
-/** Unload text loaded with LoadFileTextFromZip(). */
-RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text);
-
-/** @} */
-
-/** @defgroup directory Directory
- * @{ */
-
-/** Load all file paths directly under dirPath (non-recursive). Free with UnloadDirectoryFiles().
- * @param dirPath Directory prefix to filter entries, or NULL for root entries. */
+/**
+ * Load all file paths directly under dirPath (non-recursive). Free with UnloadDirectoryFiles().
+ *
+ * @param dirPath Directory prefix to filter entries, or NULL for root entries.
+ */
 RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZip(Zip zip, const char* dirPath);
 
-/** Load file paths with extension filtering and optional recursive scan. Free with UnloadDirectoryFiles().
+/**
+ * Load file paths with extension filtering and optional recursive scan. Free with UnloadDirectoryFiles().
+ *
  * @param basePath Directory prefix to filter entries, or NULL for all entries.
  * @param filter Semicolon-separated extension filter (e.g. ".png;.jpg"), or NULL for all files.
- * @param scanSubdirs When true, includes entries in subdirectories. */
+ * @param scanSubdirs When true, includes entries in subdirectories.
+ */
 RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs);
 
-/** @} */
-
-/** @defgroup assets Assets
- * @{ */
-
-/** Load an Image from a zip entry. */
+/**
+ * Load an Image from a zip entry.
+ */
 RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName);
 
-/** Load a Texture2D from a zip entry. Requires an open window. */
+/**
+ * Load a Texture2D from a zip entry. Requires an open window.
+ */
 RAYLIB_ZIP_API Texture2D LoadTextureFromZip(Zip zip, const char* fileName);
 
-/** Load a Wave from a zip entry. */
+/**
+ * Load a Wave from a zip entry.
+ */
 RAYLIB_ZIP_API Wave LoadWaveFromZip(Zip zip, const char* fileName);
 
-/** Load a Music stream from a zip entry. */
+/**
+ * Load a Music stream from a zip entry.
+ */
 RAYLIB_ZIP_API Music LoadMusicStreamFromZip(Zip zip, const char* fileName);
 
-/** Load a Font from a zip entry.
+/**
+ * Load a Font from a zip entry.
+ *
  * @param fontSize Desired font size in pixels.
  * @param codepoints Array of codepoints to load, or NULL for default.
- * @param codepointCount Number of codepoints in the array. */
+ * @param codepointCount Number of codepoints in the array.
+ */
 RAYLIB_ZIP_API Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize, int* codepoints, int codepointCount);
 
-/** Load a Shader from zip entries.
+/**
+ * Load a Shader from zip entries.
+ *
  * @param vsFileName Vertex shader entry path, or NULL to use the default.
- * @param fsFileName Fragment shader entry path, or NULL to use the default. */
+ * @param fsFileName Fragment shader entry path, or NULL to use the default.
+ */
 RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const char* fsFileName);
-
-/** @} */
 
 #ifdef __cplusplus
 }
@@ -153,13 +174,14 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
 #ifndef RAYLIB_ZIP_IMPLEMENTATION_ONCE
 #define RAYLIB_ZIP_IMPLEMENTATION_ONCE
 
+#include <stdlib.h>
+
+#define MINIZ_NO_STDIO
+
 #ifndef RAYLIB_ZIP_ZIP_H
     #define RAYLIB_ZIP_ZIP_H "zip.h"
 #endif
 #include RAYLIB_ZIP_ZIP_H
-
-#include <stdlib.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -195,7 +217,7 @@ RAYLIB_ZIP_API void UnloadZip(Zip zip) {
     }
 }
 
-RAYLIB_ZIP_API bool IsZipReady(Zip zip) {
+RAYLIB_ZIP_API bool IsZipValid(Zip zip) {
     return zip.zip != NULL;
 }
 
@@ -219,7 +241,9 @@ RAYLIB_ZIP_API bool FileExistsInZip(Zip zip, const char* fileName) {
 }
 
 RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize) {
-    *dataSize = 0;
+    if (dataSize != NULL) {
+        *dataSize = 0;
+    }
 
     if (zip.zip == NULL) {
         TraceLog(LOG_WARNING, "ZIP: Not ready, call LoadZip() first");
@@ -254,12 +278,10 @@ RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName,
         return NULL;
     }
 
-    *dataSize = (int)size;
+    if (dataSize != NULL) {
+        *dataSize = (int)size;
+    }
     return data;
-}
-
-RAYLIB_ZIP_API void UnloadFileDataFromZip(unsigned char* data) {
-    MemFree(data);
 }
 
 RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
@@ -280,10 +302,6 @@ RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
     MemFree(data);
 
     return text;
-}
-
-RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text) {
-    MemFree(text);
 }
 
 RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs) {
@@ -399,7 +417,7 @@ RAYLIB_ZIP_API Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize,
     int dataSize = 0;
     unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
     if (data == NULL) {
-        return GetFontDefault();
+        return (Font){0};
     }
 
     Font font = LoadFontFromMemory(GetFileExtension(fileName), data, dataSize, fontSize, codepoints, codepointCount);

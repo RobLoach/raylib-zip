@@ -25,5 +25,11 @@ else()
     target_compile_options(raylib_zip_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
+# Copy the resources
+file(GLOB resources resources/*)
+set(test_resources)
+list(APPEND test_resources ${resources})
+file(COPY ${test_resources} DESTINATION "resources/")
+
 # Set up the test
 add_test(NAME raylib_zip_test COMMAND raylib_zip_test)
