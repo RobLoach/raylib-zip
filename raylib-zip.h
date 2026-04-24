@@ -38,6 +38,13 @@
     #endif
 #endif
 
+#ifndef RAYLIB_ZIP_RAYLIB_H
+    #define RAYLIB_ZIP_RAYLIB_H "raylib.h"
+#endif
+#include RAYLIB_ZIP_RAYLIB_H
+
+#include <stdbool.h>
+
 typedef struct Zip {
     void* zip;  // struct zip_t*
 } Zip;
@@ -83,11 +90,7 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
 #endif
 #include RAYLIB_ZIP_ZIP_H
 
-#ifndef RAYLIB_ZIP_RAYLIB_H
-    #define RAYLIB_ZIP_RAYLIB_H "raylib.h"
-#endif
-#include RAYLIB_ZIP_RAYLIB_H
-
+#include <stdlib.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -226,16 +229,14 @@ RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* bas
         if (zip_entry_openbyindex(z, i) < 0) continue;
         const char* name = zip_entry_name(z);
         bool isDir = zip_entry_isdir(z);
+
+        bool matches = !isDir && name != NULL;
+        if (matches && baseLen > 0 && strncmp(name, basePath, baseLen) != 0) matches = false;
+        if (matches && !scanSubdirs && strchr(name + baseLen, '/') != NULL) matches = false;
+        if (matches && filter != NULL && !IsFileExtension(name, filter)) matches = false;
+
         zip_entry_close(z);
-
-        if (isDir || name == NULL) continue;
-        if (baseLen > 0 && strncmp(name, basePath, baseLen) != 0) continue;
-
-        const char* rest = name + baseLen;
-        if (!scanSubdirs && strchr(rest, '/') != NULL) continue;
-        if (filter != NULL && !IsFileExtension(name, filter)) continue;
-
-        count++;
+        if (matches) count++;
     }
 
     if (count == 0) return result;
@@ -248,21 +249,22 @@ RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* bas
         if (zip_entry_openbyindex(z, i) < 0) continue;
         const char* name = zip_entry_name(z);
         bool isDir = zip_entry_isdir(z);
-        zip_entry_close(z);
 
-        if (isDir || name == NULL) continue;
-        if (baseLen > 0 && strncmp(name, basePath, baseLen) != 0) continue;
+        bool matches = !isDir && name != NULL;
+        if (matches && baseLen > 0 && strncmp(name, basePath, baseLen) != 0) matches = false;
+        if (matches && !scanSubdirs && strchr(name + baseLen, '/') != NULL) matches = false;
+        if (matches && filter != NULL && !IsFileExtension(name, filter)) matches = false;
 
-        const char* rest = name + baseLen;
-        if (!scanSubdirs && strchr(rest, '/') != NULL) continue;
-        if (filter != NULL && !IsFileExtension(name, filter)) continue;
-
-        size_t len = strlen(name);
-        result.paths[result.count] = (char*)RL_MALLOC(len + 1);
-        if (result.paths[result.count] != NULL) {
-            memcpy(result.paths[result.count], name, len + 1);
-            result.count++;
+        if (matches) {
+            size_t len = strlen(name);
+            result.paths[result.count] = (char*)RL_MALLOC(len + 1);
+            if (result.paths[result.count] != NULL) {
+                memcpy(result.paths[result.count], name, len + 1);
+                result.count++;
+            }
         }
+
+        zip_entry_close(z);
     }
 
     return result;
