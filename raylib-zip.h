@@ -219,7 +219,7 @@ RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* bas
 
     struct zip_t* z = (struct zip_t*)zip.zip;
     int total = (int)zip_entries_total(z);
-    size_t baseLen = (basePath != NULL) ? strlen(basePath) : 0;
+    unsigned int baseLen = (basePath != NULL) ? TextLength(basePath) : 0;
 
     // First pass: count matching entries
     int count = 0;
@@ -229,8 +229,8 @@ RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* bas
         bool isDir = zip_entry_isdir(z);
 
         bool matches = !isDir && name != NULL;
-        if (matches && baseLen > 0 && strncmp(name, basePath, baseLen) != 0) matches = false;
-        if (matches && !scanSubdirs && strchr(name + baseLen, '/') != NULL) matches = false;
+        if (matches && baseLen > 0 && TextFindIndex(name, basePath) != 0) matches = false;
+        if (matches && !scanSubdirs && TextFindIndex(name + baseLen, "/") >= 0) matches = false;
         if (matches && filter != NULL && !IsFileExtension(name, filter)) matches = false;
 
         zip_entry_close(z);
@@ -249,15 +249,15 @@ RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* bas
         bool isDir = zip_entry_isdir(z);
 
         bool matches = !isDir && name != NULL;
-        if (matches && baseLen > 0 && strncmp(name, basePath, baseLen) != 0) matches = false;
-        if (matches && !scanSubdirs && strchr(name + baseLen, '/') != NULL) matches = false;
+        if (matches && baseLen > 0 && TextFindIndex(name, basePath) != 0) matches = false;
+        if (matches && !scanSubdirs && TextFindIndex(name + baseLen, "/") >= 0) matches = false;
         if (matches && filter != NULL && !IsFileExtension(name, filter)) matches = false;
 
         if (matches) {
-            size_t len = strlen(name);
+            unsigned int len = TextLength(name);
             result.paths[result.count] = (char*)RL_MALLOC(len + 1);
             if (result.paths[result.count] != NULL) {
-                memcpy(result.paths[result.count], name, len + 1);
+                TextCopy(result.paths[result.count], name);
                 result.count++;
             }
         }
