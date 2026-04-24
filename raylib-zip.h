@@ -38,27 +38,31 @@
     #endif
 #endif
 
+typedef struct Zip {
+    void* zip;  // struct zip_t*
+} Zip;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-RAYLIB_ZIP_API bool InitZip(const char* zipFile);
-RAYLIB_ZIP_API void CloseZip(void);
-RAYLIB_ZIP_API bool IsZipReady(void);
-RAYLIB_ZIP_API bool FileExistsInZip(const char* fileName);
-RAYLIB_ZIP_API int GetZipEntryCount(void);
+RAYLIB_ZIP_API Zip InitZip(const char* zipFile);
+RAYLIB_ZIP_API void CloseZip(Zip zip);
+RAYLIB_ZIP_API bool IsZipReady(Zip zip);
+RAYLIB_ZIP_API bool FileExistsInZip(Zip zip, const char* fileName);
+RAYLIB_ZIP_API int GetZipEntryCount(Zip zip);
 
-RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(const char* fileName, int* dataSize);
+RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize);
 RAYLIB_ZIP_API void UnloadFileDataFromZip(unsigned char* data);
-RAYLIB_ZIP_API char* LoadFileTextFromZip(const char* fileName);
+RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName);
 RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text);
 
-RAYLIB_ZIP_API Image LoadImageFromZip(const char* fileName);
-RAYLIB_ZIP_API Texture2D LoadTextureFromZip(const char* fileName);
-RAYLIB_ZIP_API Wave LoadWaveFromZip(const char* fileName);
-RAYLIB_ZIP_API Music LoadMusicStreamFromZip(const char* fileName);
-RAYLIB_ZIP_API Font LoadFontFromZip(const char* fileName, int fontSize, int* codepoints, int codepointCount);
-RAYLIB_ZIP_API Shader LoadShaderFromZip(const char* vsFileName, const char* fsFileName);
+RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName);
+RAYLIB_ZIP_API Texture2D LoadTextureFromZip(Zip zip, const char* fileName);
+RAYLIB_ZIP_API Wave LoadWaveFromZip(Zip zip, const char* fileName);
+RAYLIB_ZIP_API Music LoadMusicStreamFromZip(Zip zip, const char* fileName);
+RAYLIB_ZIP_API Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize, int* codepoints, int codepointCount);
+RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const char* fsFileName);
 
 #ifdef __cplusplus
 }
@@ -86,76 +90,73 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(const char* vsFileName, const char* fsFi
 extern "C" {
 #endif
 
-static struct zip_t* _raylib_zip = NULL;
-
-RAYLIB_ZIP_API bool InitZip(const char* zipFile) {
-    if (_raylib_zip != NULL) {
-        CloseZip();
-    }
-    _raylib_zip = zip_open(zipFile, 0, 'r');
-    if (_raylib_zip == NULL) {
+RAYLIB_ZIP_API Zip InitZip(const char* zipFile) {
+    Zip zip = {0};
+    zip.zip = zip_open(zipFile, 0, 'r');
+    if (zip.zip == NULL) {
         TraceLog(LOG_WARNING, "ZIP: Failed to open %s", zipFile);
-        return false;
     }
-    return true;
+    return zip;
 }
 
-RAYLIB_ZIP_API void CloseZip(void) {
-    if (_raylib_zip != NULL) {
-        zip_close(_raylib_zip);
-        _raylib_zip = NULL;
+RAYLIB_ZIP_API void CloseZip(Zip zip) {
+    if (zip.zip != NULL) {
+        zip_close((struct zip_t*)zip.zip);
     }
 }
 
-RAYLIB_ZIP_API bool IsZipReady(void) {
-    return _raylib_zip != NULL;
+RAYLIB_ZIP_API bool IsZipReady(Zip zip) {
+    return zip.zip != NULL;
 }
 
-RAYLIB_ZIP_API int GetZipEntryCount(void) {
-    if (_raylib_zip == NULL) {
+RAYLIB_ZIP_API int GetZipEntryCount(Zip zip) {
+    if (zip.zip == NULL) {
         return 0;
     }
-    return (int)zip_entries_total(_raylib_zip);
+    return (int)zip_entries_total((struct zip_t*)zip.zip);
 }
 
-RAYLIB_ZIP_API bool FileExistsInZip(const char* fileName) {
-    if (_raylib_zip == NULL) {
+RAYLIB_ZIP_API bool FileExistsInZip(Zip zip, const char* fileName) {
+    if (zip.zip == NULL) {
         return false;
     }
-    if (zip_entry_open(_raylib_zip, fileName) < 0) {
+    struct zip_t* z = (struct zip_t*)zip.zip;
+    if (zip_entry_open(z, fileName) < 0) {
         return false;
     }
-    zip_entry_close(_raylib_zip);
+    zip_entry_close(z);
     return true;
 }
 
-RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(const char* fileName, int* dataSize) {
+RAYLIB_ZIP_API unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize) {
     *dataSize = 0;
 
-    if (_raylib_zip == NULL) {
-        TraceLog(LOG_WARNING, "ZIP: Not initialized, call InitZip() first");
+    if (zip.zip == NULL) {
+        TraceLog(LOG_WARNING, "ZIP: Not ready, call InitZip() first");
         return NULL;
     }
 
-    if (zip_entry_open(_raylib_zip, fileName) < 0) {
+    struct zip_t* z = (struct zip_t*)zip.zip;
+
+    if (zip_entry_open(z, fileName) < 0) {
         TraceLog(LOG_WARNING, "ZIP: Failed to open entry: %s", fileName);
         return NULL;
     }
 
-    size_t size = (size_t)zip_entry_uncomp_size(_raylib_zip);
+    size_t size = (size_t)zip_entry_uncomp_size(z);
     if (size == 0) {
-        zip_entry_close(_raylib_zip);
+        zip_entry_close(z);
         return NULL;
     }
 
     unsigned char* data = (unsigned char*)RL_MALLOC(size);
     if (data == NULL) {
-        zip_entry_close(_raylib_zip);
+        zip_entry_close(z);
         return NULL;
     }
 
-    ssize_t bytesRead = zip_entry_noallocread(_raylib_zip, data, size);
-    zip_entry_close(_raylib_zip);
+    ssize_t bytesRead = zip_entry_noallocread(z, data, size);
+    zip_entry_close(z);
 
     if (bytesRead < 0) {
         RL_FREE(data);
@@ -171,9 +172,9 @@ RAYLIB_ZIP_API void UnloadFileDataFromZip(unsigned char* data) {
     RL_FREE(data);
 }
 
-RAYLIB_ZIP_API char* LoadFileTextFromZip(const char* fileName) {
+RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
     int dataSize = 0;
-    unsigned char* data = LoadFileDataFromZip(fileName, &dataSize);
+    unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
     if (data == NULL) {
         return NULL;
     }
@@ -195,9 +196,9 @@ RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text) {
     RL_FREE(text);
 }
 
-RAYLIB_ZIP_API Image LoadImageFromZip(const char* fileName) {
+RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName) {
     int dataSize = 0;
-    unsigned char* data = LoadFileDataFromZip(fileName, &dataSize);
+    unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
     if (data == NULL) {
         return (Image){0};
     }
@@ -207,8 +208,8 @@ RAYLIB_ZIP_API Image LoadImageFromZip(const char* fileName) {
     return image;
 }
 
-RAYLIB_ZIP_API Texture2D LoadTextureFromZip(const char* fileName) {
-    Image image = LoadImageFromZip(fileName);
+RAYLIB_ZIP_API Texture2D LoadTextureFromZip(Zip zip, const char* fileName) {
+    Image image = LoadImageFromZip(zip, fileName);
     if (image.data == NULL) {
         return (Texture2D){0};
     }
@@ -218,9 +219,9 @@ RAYLIB_ZIP_API Texture2D LoadTextureFromZip(const char* fileName) {
     return texture;
 }
 
-RAYLIB_ZIP_API Wave LoadWaveFromZip(const char* fileName) {
+RAYLIB_ZIP_API Wave LoadWaveFromZip(Zip zip, const char* fileName) {
     int dataSize = 0;
-    unsigned char* data = LoadFileDataFromZip(fileName, &dataSize);
+    unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
     if (data == NULL) {
         return (Wave){0};
     }
@@ -230,9 +231,9 @@ RAYLIB_ZIP_API Wave LoadWaveFromZip(const char* fileName) {
     return wave;
 }
 
-RAYLIB_ZIP_API Music LoadMusicStreamFromZip(const char* fileName) {
+RAYLIB_ZIP_API Music LoadMusicStreamFromZip(Zip zip, const char* fileName) {
     int dataSize = 0;
-    unsigned char* data = LoadFileDataFromZip(fileName, &dataSize);
+    unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
     if (data == NULL) {
         return (Music){0};
     }
@@ -242,9 +243,9 @@ RAYLIB_ZIP_API Music LoadMusicStreamFromZip(const char* fileName) {
     return music;
 }
 
-RAYLIB_ZIP_API Font LoadFontFromZip(const char* fileName, int fontSize, int* codepoints, int codepointCount) {
+RAYLIB_ZIP_API Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize, int* codepoints, int codepointCount) {
     int dataSize = 0;
-    unsigned char* data = LoadFileDataFromZip(fileName, &dataSize);
+    unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
     if (data == NULL) {
         return GetFontDefault();
     }
@@ -254,15 +255,15 @@ RAYLIB_ZIP_API Font LoadFontFromZip(const char* fileName, int fontSize, int* cod
     return font;
 }
 
-RAYLIB_ZIP_API Shader LoadShaderFromZip(const char* vsFileName, const char* fsFileName) {
+RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const char* fsFileName) {
     char* vsCode = NULL;
     char* fsCode = NULL;
 
     if (vsFileName != NULL) {
-        vsCode = LoadFileTextFromZip(vsFileName);
+        vsCode = LoadFileTextFromZip(zip, vsFileName);
     }
     if (fsFileName != NULL) {
-        fsCode = LoadFileTextFromZip(fsFileName);
+        fsCode = LoadFileTextFromZip(zip, fsFileName);
     }
 
     Shader shader = LoadShaderFromMemory(vsCode, fsCode);

@@ -11,16 +11,16 @@ Zip archive support for [raylib](https://www.raylib.com) using [kuba--/zip](http
 int main() {
     InitWindow(800, 600, "raylib-zip");
 
-    InitZip("resources.zip");
+    Zip zip = InitZip("resources.zip");
 
-    Image image = LoadImageFromZip("player.png");
+    Image image = LoadImageFromZip(zip, "player.png");
     Texture2D texture = LoadTextureFromImage(image);
     UnloadImage(image);
 
     // ... game loop ...
 
     UnloadTexture(texture);
-    CloseZip();
+    CloseZip(zip);
     CloseWindow();
 }
 ```
@@ -28,23 +28,23 @@ int main() {
 ## API
 
 ``` c
-bool InitZip(const char* zipFile);
-void CloseZip(void);
-bool IsZipReady(void);
-bool FileExistsInZip(const char* fileName);
-int GetZipEntryCount(void);
+Zip InitZip(const char* zipFile);
+void CloseZip(Zip zip);
+bool IsZipReady(Zip zip);
+bool FileExistsInZip(Zip zip, const char* fileName);
+int GetZipEntryCount(Zip zip);
 
-unsigned char* LoadFileDataFromZip(const char* fileName, int* dataSize);
+unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize);
 void UnloadFileDataFromZip(unsigned char* data);
-char* LoadFileTextFromZip(const char* fileName);
+char* LoadFileTextFromZip(Zip zip, const char* fileName);
 void UnloadFileTextFromZip(char* text);
 
-Image LoadImageFromZip(const char* fileName);
-Texture2D LoadTextureFromZip(const char* fileName);
-Wave LoadWaveFromZip(const char* fileName);
-Music LoadMusicStreamFromZip(const char* fileName);
-Font LoadFontFromZip(const char* fileName, int fontSize, int* codepoints, int codepointCount);
-Shader LoadShaderFromZip(const char* vsFileName, const char* fsFileName);
+Image LoadImageFromZip(Zip zip, const char* fileName);
+Texture2D LoadTextureFromZip(Zip zip, const char* fileName);
+Wave LoadWaveFromZip(Zip zip, const char* fileName);
+Music LoadMusicStreamFromZip(Zip zip, const char* fileName);
+Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize, int* codepoints, int codepointCount);
+Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const char* fsFileName);
 ```
 
 ## Development
