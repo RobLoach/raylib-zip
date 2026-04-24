@@ -7,11 +7,20 @@
 #include "../raylib-zip.h"
 
 int main() {
-    // Create a test zip with some content
+    // Create a test zip with some content across directories
     const char* testContent = "Hello from raylib-zip!";
     struct zip_t* z = zip_open("test.zip", 6, 'w');
     assert(z != NULL);
     assert(zip_entry_open(z, "hello.txt") == 0);
+    assert(zip_entry_write(z, testContent, strlen(testContent)) == 0);
+    zip_entry_close(z);
+    assert(zip_entry_open(z, "images/player.png") == 0);
+    assert(zip_entry_write(z, testContent, strlen(testContent)) == 0);
+    zip_entry_close(z);
+    assert(zip_entry_open(z, "images/sub/icon.png") == 0);
+    assert(zip_entry_write(z, testContent, strlen(testContent)) == 0);
+    zip_entry_close(z);
+    assert(zip_entry_open(z, "images/bg.jpg") == 0);
     assert(zip_entry_write(z, testContent, strlen(testContent)) == 0);
     zip_entry_close(z);
     zip_close(z);
@@ -19,7 +28,7 @@ int main() {
     // Load from file
     Zip zip = LoadZip("test.zip");
     assert(IsZipReady(zip));
-    assert(GetZipEntryCount(zip) == 1);
+    assert(GetZipEntryCount(zip) == 4);
     assert(FileExistsInZip(zip, "hello.txt"));
     assert(!FileExistsInZip(zip, "missing.txt"));
 
@@ -36,6 +45,26 @@ int main() {
     assert(text != NULL);
     assert(strcmp(text, testContent) == 0);
     UnloadFileTextFromZip(text);
+
+    // LoadDirectoryFilesFromZip: all files at root (no subdir)
+    FilePathList root = LoadDirectoryFilesFromZip(zip, NULL);
+    assert(root.count == 1);  // only hello.txt
+    UnloadDirectoryFiles(root);
+
+    // LoadDirectoryFilesFromZip: files directly in images/
+    FilePathList images = LoadDirectoryFilesFromZip(zip, "images/");
+    assert(images.count == 2);  // player.png and bg.jpg, not sub/icon.png
+    UnloadDirectoryFiles(images);
+
+    // LoadDirectoryFilesFromZipEx: images/ recursively, .png only
+    FilePathList pngs = LoadDirectoryFilesFromZipEx(zip, "images/", ".png", true);
+    assert(pngs.count == 2);  // player.png and sub/icon.png
+    UnloadDirectoryFiles(pngs);
+
+    // LoadDirectoryFilesFromZipEx: all files recursively
+    FilePathList all = LoadDirectoryFilesFromZipEx(zip, NULL, NULL, true);
+    assert(all.count == 4);
+    UnloadDirectoryFiles(all);
 
     UnloadZip(zip);
 

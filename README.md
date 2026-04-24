@@ -35,6 +35,9 @@ bool IsZipReady(Zip zip);
 bool FileExistsInZip(Zip zip, const char* fileName);
 int GetZipEntryCount(Zip zip);
 
+FilePathList LoadDirectoryFilesFromZip(Zip zip, const char* dirPath);
+FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs);
+
 unsigned char* LoadFileDataFromZip(Zip zip, const char* fileName, int* dataSize);
 void UnloadFileDataFromZip(unsigned char* data);
 char* LoadFileTextFromZip(Zip zip, const char* fileName);

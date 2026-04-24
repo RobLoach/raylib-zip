@@ -58,6 +58,9 @@ RAYLIB_ZIP_API void UnloadFileDataFromZip(unsigned char* data);
 RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName);
 RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text);
 
+RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZip(Zip zip, const char* dirPath);
+RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs);
+
 RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName);
 RAYLIB_ZIP_API Texture2D LoadTextureFromZip(Zip zip, const char* fileName);
 RAYLIB_ZIP_API Wave LoadWaveFromZip(Zip zip, const char* fileName);
@@ -204,6 +207,69 @@ RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
 
 RAYLIB_ZIP_API void UnloadFileTextFromZip(char* text) {
     RL_FREE(text);
+}
+
+RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZipEx(Zip zip, const char* basePath, const char* filter, bool scanSubdirs) {
+    FilePathList result = {0};
+
+    if (zip.zip == NULL) {
+        return result;
+    }
+
+    struct zip_t* z = (struct zip_t*)zip.zip;
+    int total = (int)zip_entries_total(z);
+    size_t baseLen = (basePath != NULL) ? strlen(basePath) : 0;
+
+    // First pass: count matching entries
+    int count = 0;
+    for (int i = 0; i < total; i++) {
+        if (zip_entry_openbyindex(z, i) < 0) continue;
+        const char* name = zip_entry_name(z);
+        bool isDir = zip_entry_isdir(z);
+        zip_entry_close(z);
+
+        if (isDir || name == NULL) continue;
+        if (baseLen > 0 && strncmp(name, basePath, baseLen) != 0) continue;
+
+        const char* rest = name + baseLen;
+        if (!scanSubdirs && strchr(rest, '/') != NULL) continue;
+        if (filter != NULL && !IsFileExtension(name, filter)) continue;
+
+        count++;
+    }
+
+    if (count == 0) return result;
+
+    result.paths = (char**)RL_MALLOC(count * sizeof(char*));
+    if (result.paths == NULL) return result;
+
+    // Second pass: fill entries
+    for (int i = 0; i < total; i++) {
+        if (zip_entry_openbyindex(z, i) < 0) continue;
+        const char* name = zip_entry_name(z);
+        bool isDir = zip_entry_isdir(z);
+        zip_entry_close(z);
+
+        if (isDir || name == NULL) continue;
+        if (baseLen > 0 && strncmp(name, basePath, baseLen) != 0) continue;
+
+        const char* rest = name + baseLen;
+        if (!scanSubdirs && strchr(rest, '/') != NULL) continue;
+        if (filter != NULL && !IsFileExtension(name, filter)) continue;
+
+        size_t len = strlen(name);
+        result.paths[result.count] = (char*)RL_MALLOC(len + 1);
+        if (result.paths[result.count] != NULL) {
+            memcpy(result.paths[result.count], name, len + 1);
+            result.count++;
+        }
+    }
+
+    return result;
+}
+
+RAYLIB_ZIP_API FilePathList LoadDirectoryFilesFromZip(Zip zip, const char* dirPath) {
+    return LoadDirectoryFilesFromZipEx(zip, dirPath, NULL, false);
 }
 
 RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName) {
