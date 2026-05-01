@@ -4,6 +4,8 @@
 *
 *   Copyright 2026 Rob Loach (@RobLoach)
 *
+*   VERSION: 0.1.0
+*
 *   DEPENDENCIES:
 *       raylib https://www.raylib.com
 *       zip    https://github.com/kuba--/zip
@@ -297,13 +299,13 @@ RAYLIB_ZIP_API char* LoadFileTextFromZip(Zip zip, const char* fileName) {
 
     char* text = (char*)RL_MALLOC(dataSize + 1);
     if (text == NULL) {
-        MemFree(data);
+        UnloadFileData(data);
         return NULL;
     }
 
     memcpy(text, data, dataSize);
     text[dataSize] = '\0';
-    MemFree(data);
+    UnloadFileData(data);
 
     return text;
 }
@@ -378,13 +380,25 @@ RAYLIB_ZIP_API Image LoadImageFromZip(Zip zip, const char* fileName) {
     }
 
     Image image = LoadImageFromMemory(GetFileExtension(fileName), data, dataSize);
-    MemFree(data);
+    UnloadFileData(data);
+    return image;
+}
+
+RAYLIB_ZIP_API Image LoadImageAnimFromZip(Zip zip, const char *fileName, int *frames) {
+    int dataSize = 0;
+    unsigned char* data = LoadFileDataFromZip(zip, fileName, &dataSize);
+    if (data == NULL) {
+        return (Image){0};
+    }
+
+    Image image = LoadImageAnimFromMemory(GetFileExtension(fileName), data, dataSize, frames);
+    UnloadFileData(data);
     return image;
 }
 
 RAYLIB_ZIP_API Texture2D LoadTextureFromZip(Zip zip, const char* fileName) {
     Image image = LoadImageFromZip(zip, fileName);
-    if (image.data == NULL) {
+    if (!IsImageValid(image)) {
         return (Texture2D){0};
     }
 
@@ -401,7 +415,7 @@ RAYLIB_ZIP_API Wave LoadWaveFromZip(Zip zip, const char* fileName) {
     }
 
     Wave wave = LoadWaveFromMemory(GetFileExtension(fileName), data, dataSize);
-    MemFree(data);
+    UnloadFileData(data);
     return wave;
 }
 
@@ -413,7 +427,7 @@ RAYLIB_ZIP_API Music LoadMusicStreamFromZip(Zip zip, const char* fileName) {
     }
 
     Music music = LoadMusicStreamFromMemory(GetFileExtension(fileName), data, dataSize);
-    MemFree(data);
+    UnloadFileData(data);
     return music;
 }
 
@@ -425,28 +439,28 @@ RAYLIB_ZIP_API Font LoadFontFromZip(Zip zip, const char* fileName, int fontSize,
     }
 
     Font font = LoadFontFromMemory(GetFileExtension(fileName), data, dataSize, fontSize, codepoints, codepointCount);
-    MemFree(data);
+    UnloadFileData(data);
     return font;
 }
 
 RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const char* fsFileName) {
-    char* vsCode = NULL;
-    char* fsCode = NULL;
+    unsigned char* vsCode = NULL;
+    unsigned char* fsCode = NULL;
 
     if (vsFileName != NULL) {
-        vsCode = LoadFileTextFromZip(zip, vsFileName);
+        vsCode = LoadFileDataFromZip(zip, vsFileName, NULL);
     }
     if (fsFileName != NULL) {
-        fsCode = LoadFileTextFromZip(zip, fsFileName);
+        fsCode = LoadFileDataFromZip(zip, fsFileName, NULL);
     }
 
-    Shader shader = LoadShaderFromMemory(vsCode, fsCode);
+    Shader shader = LoadShaderFromMemory((const char*)vsCode, (const char*)fsCode);
 
     if (vsCode != NULL) {
-        MemFree(vsCode);
+        UnloadFileData(vsCode);
     }
     if (fsCode != NULL) {
-        MemFree(fsCode);
+        UnloadFileData(fsCode);
     }
 
     return shader;

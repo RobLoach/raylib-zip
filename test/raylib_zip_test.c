@@ -44,6 +44,8 @@ int main() {
             AssertNotNull(text);
             AssertStringEqual(text, testContent);
             UnloadFileText(text);
+            text = LoadFileTextFromZip(zip, "NotFound.txt");
+            AssertNull(text);
         }
 
         // LoadImageFromZip

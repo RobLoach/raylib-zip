@@ -1,6 +1,6 @@
 # raylib-zip
 
-Zip archive support for [raylib](https://www.raylib.com), using [`kuba--/zip`](https://github.com/kuba--/zip).
+Zip archive support for [raylib](https://www.raylib.com), using [`kuba--/zip`](https://github.com/kuba--/zip) and miniz.
 
 ## Usage
 
