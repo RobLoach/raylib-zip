@@ -4,6 +4,8 @@ Zip archive support for [raylib](https://www.raylib.com), using [`kuba--/zip`](h
 
 ## Usage
 
+raylib-zip is a header-only library. Copy `raylib-zip.h`, `zip.h`, `miniz.h`, and `zip.c` into your project, then in **one** C file define the implementation before including:
+
 ``` c
 #define RAYLIB_ZIP_IMPLEMENTATION
 #include "raylib-zip.h"
@@ -19,6 +21,14 @@ int main() {
     UnloadZip(zip);
     CloseWindow();
 }
+```
+
+The implementation pulls in `zip.c` automatically. To use a different path, define `RAYLIB_ZIP_ZIP_C` before including:
+
+``` c
+#define RAYLIB_ZIP_ZIP_C "path/to/zip.c"
+#define RAYLIB_ZIP_IMPLEMENTATION
+#include "raylib-zip.h"
 ```
 
 ## API
