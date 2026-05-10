@@ -189,6 +189,11 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
 #endif
 #include RAYLIB_ZIP_ZIP_H
 
+#ifndef RAYLIB_ZIP_ZIP_C
+    #define RAYLIB_ZIP_ZIP_C "zip.c"
+#endif
+#include RAYLIB_ZIP_ZIP_C
+
 #ifdef __cplusplus
 extern "C" {
 #endif
