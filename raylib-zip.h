@@ -179,6 +179,11 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
 #include <stdlib.h>
 
 #define MINIZ_NO_STDIO
+#define MINIZ_NO_TIME
+#define MINIZ_NO_ARCHIVE_WRITING_APIS
+#define MINIZ_NO_ZLIB_APIS
+#define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
+
 #ifdef ZIP_ENABLE_DEFLATE
 #undef ZIP_ENABLE_DEFLATE
 #endif
@@ -188,6 +193,11 @@ RAYLIB_ZIP_API Shader LoadShaderFromZip(Zip zip, const char* vsFileName, const c
     #define RAYLIB_ZIP_ZIP_H "zip.h"
 #endif
 #include RAYLIB_ZIP_ZIP_H
+
+#ifndef RAYLIB_ZIP_ZIP_C
+    #define RAYLIB_ZIP_ZIP_C "zip.c"
+#endif
+#include RAYLIB_ZIP_ZIP_C
 
 #ifdef __cplusplus
 extern "C" {
