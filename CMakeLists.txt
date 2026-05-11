@@ -23,6 +23,7 @@ if (RAYLIB_ZIP_BUILD_TESTS)
     include(CTest)
     enable_testing()
     if (BUILD_TESTING)
+        set(CTEST_OUTPUT_ON_FAILURE ON)
         set(CTEST_CUSTOM_TESTS_IGNORE
             pkg-config--static
         )
